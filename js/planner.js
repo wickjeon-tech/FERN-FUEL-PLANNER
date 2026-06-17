@@ -36,10 +36,10 @@
     // Z2/Z3: 10분 전까지, Z4/Z5: 5분 전까지 (고강도일수록 혈류 우선 근육)
     // cutoffMin: 피니시 N분 전까지 마지막 젤 허용 (Jeukendrup 2014: 15~20분이 흡수 최적 창)
     // Z2: 저강도 대사, 20분 전 최적 / Z3: 18분 / Z4: 18분 / Z5: 15분 (구강 수용체 즉시 자극 포함)
-    easy:     { label: 'Z2 · Easy',     runHint: '저강도 유산소 · 글리코겐 절약 구간',      bikeHint: 'FTP 55~75% · 저강도 유산소 · 지방 산화 중심',          choBase: 40,  bikeBase: 62,  firstMin: 40, cutoffMin: 20, met: { run: 8.0,  bike: 6.5  } },
-    moderate: { label: 'Z3 · Moderate', runHint: '지속 레이스 페이스 · 대회 목표 강도',    bikeHint: 'FTP 75~90% · 지속 레이스 페이스 · 대회 목표 강도',      choBase: 60,  bikeBase: 82,  firstMin: 30, cutoffMin: 18, met: { run: 10.5, bike: 8.5  } },
-    hard:     { label: 'Z4 · Hard',     runHint: '역치 강도 · 빠른 글리코겐 소모 구간',    bikeHint: 'FTP 90~105% · 역치 강도 · 97g/hr 흡수를 위한 장훈련(Gut Training) 사전 필수',    choBase: 75,  bikeBase: 97,  firstMin: 25, cutoffMin: 18, met: { run: 13.0, bike: 10.5 } },
-    race:     { label: 'Z5 · Race',     runHint: '레이스 최대 출력 · 글리코겐 최우선 연소', bikeHint: 'FTP 105%+ · 최대 출력 · 112g/hr 수준으로 사전 장훈련(Gut Training) 반드시 필수',  choBase: 90,  bikeBase: 112, firstMin: 20, cutoffMin: 15, met: { run: 15.5, bike: 12.5 } },
+    easy:     { label: 'Easy',     runHint: '저강도 유산소',      bikeHint: 'FTP 55~75% · 저강도 유산소 · 지방 산화 중심',          choBase: 40,  bikeBase: 62,  firstMin: 40, cutoffMin: 20, met: { run: 8.0,  bike: 6.5  } },
+    moderate: { label: 'Moderate', runHint: '지속 가능한 페이스',    bikeHint: 'FTP 75~90% · 지속 가능한 페이스',      choBase: 60,  bikeBase: 82,  firstMin: 30, cutoffMin: 18, met: { run: 10.5, bike: 8.5  } },
+    hard:     { label: 'Hard',     runHint: '역치 강도 · 빠른 글리코겐 소모',    bikeHint: 'FTP 90~105% · 역치 · 97g/hr 흡수를 위한 장훈련 필수',    choBase: 75,  bikeBase: 97,  firstMin: 25, cutoffMin: 18, met: { run: 13.0, bike: 10.5 } },
+    race:     { label: 'Race',     runHint: '레이스 최대 출력 · 글리코겐 최우선 연소', bikeHint: 'FTP 105%+ · 최대 출력 · 112g/hr 장훈련 필수',  choBase: 90,  bikeBase: 112, firstMin: 20, cutoffMin: 15, met: { run: 15.5, bike: 12.5 } },
   };
 
   // ── 상태 ──────────────────────────────────────────────────────
