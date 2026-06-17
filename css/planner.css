@@ -817,9 +817,12 @@ input:checked + .slider-round:before {
   gap: 10px;
 }
 
-@media screen and (max-width: 600px) {
+@media screen and (max-width: 640px) {
   .tech-grid {
     grid-template-columns: 1fr;
+  }
+  .tech-card[style*="grid-column"] {
+    grid-column: span 1 !important;
   }
 }
 
