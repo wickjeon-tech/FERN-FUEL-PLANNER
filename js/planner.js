@@ -54,6 +54,7 @@
     age: '',
     height: '',
     temp: 18,
+    humidity: 50,
     warmup: true,
   };
 
@@ -168,9 +169,31 @@
   }
 
   /**
+   * 체감온도(Heat Index) 계산
+   * Rothfusz regression (NOAA) — 27°C 이상, 습도 40% 이상일 때 적용
+   * 미만 조건에서는 기온 그대로 반환
+   */
+  function calcHeatIndex(tempC, humidity) {
+    if (tempC < 27 || humidity < 40) return tempC;
+    const T = tempC * 9 / 5 + 32; // °C → °F
+    const R = humidity;
+    const HI =
+      -42.379
+      + 2.04901523  * T
+      + 10.14333127 * R
+      - 0.22475541  * T * R
+      - 0.00683783  * T * T
+      - 0.05481717  * R * R
+      + 0.00122874  * T * T * R
+      + 0.00085282  * T * R * R
+      - 0.00000199  * T * T * R * R;
+    return Math.round((HI - 32) * 5 / 9); // °F → °C
+  }
+
+  /**
    * 땀 배출량 계산 (L/hr)
    */
-  function calcSweatRate(tempC, weight, gender, sport) {
+  function calcSweatRate(tempC, weight, gender, sport, humidity) {
     let base;
     if      (tempC <= 0)  base = 0.45;
     else if (tempC <= 10) base = 0.45 + (tempC / 10) * 0.20;
@@ -181,6 +204,13 @@
     let rate = base * Math.pow((weight || 70) / 70, 0.75);
     if (gender === 'female') rate *= 0.82;
     if (sport === 'bike')    rate *= 0.88;
+
+    // 습도 보정: 고습 → 땀 증발 억제 → 발한량 증가
+    const rh = humidity || 50;
+    if      (rh >= 80) rate *= 1.15;
+    else if (rh >= 60) rate *= 1.08;
+    else if (rh < 30)  rate *= 0.92;
+
     return Math.max(0.15, parseFloat(rate.toFixed(2)));
   }
 
@@ -267,7 +297,7 @@
       durationH: state.durationH, durationM: state.durationM,
       intensity: state.intensity, gender: state.gender,
       weight: state.weight, age: state.age, height: state.height,
-      temp: state.temp, warmup: state.warmup,
+      temp: state.temp, humidity: state.humidity, warmup: state.warmup,
     };
     const b64 = btoa(encodeURIComponent(JSON.stringify(data)));
     return `${window.location.origin}${window.location.pathname}?p=${b64}`;
@@ -293,6 +323,9 @@
     dom.tempSlider     = document.getElementById('temp-slider');
     dom.tempValue      = document.getElementById('temp-value-display');
     dom.tempBadge      = document.getElementById('temp-badge-display');
+    dom.humiditySlider = document.getElementById('humidity-slider');
+    dom.humidityValue  = document.getElementById('humidity-value-display');
+    dom.humidityBadge  = document.getElementById('humidity-badge-display');
     dom.btnCalc        = document.getElementById('btn-calculate');
     dom.mainContent    = document.getElementById('planner-main-content');
   }
@@ -334,6 +367,25 @@
     dom.tempBadge.className = `range-slider-badge ${cls}`;
   }
 
+  function updateHumidityUI(val) {
+    state.humidity = parseInt(val, 10);
+    dom.humiditySlider.value = state.humidity;
+    dom.humidityValue.textContent = `${state.humidity}%`;
+
+    const pct = state.humidity;
+    dom.humiditySlider.style.background = `linear-gradient(90deg, var(--color-accent) ${pct}%, var(--color-border) ${pct}%)`;
+
+    let label = '💧 보통', cls = 'cool';
+    if      (state.humidity >= 80) { label = '💦 매우 습함'; cls = 'hot';  }
+    else if (state.humidity >= 60) { label = '💧 습함';      cls = 'warm'; }
+    else if (state.humidity >= 40) { label = '💧 보통';      cls = 'cool'; }
+    else if (state.humidity >= 20) { label = '🌵 건조';      cls = 'cold'; }
+    else                           { label = '🌵 매우 건조'; cls = 'cold'; }
+
+    dom.humidityBadge.textContent = label;
+    dom.humidityBadge.className = `range-slider-badge ${cls}`;
+  }
+
   function syncFormToState() {
     dom.sportBtns.forEach(b => b.classList.toggle('is-active', b.dataset.sport === state.sport));
     renderEventButtons();
@@ -346,6 +398,7 @@
     dom.heightInput.value = state.height;
     dom.weightInput.value = state.weight;
     updateTempUI(state.temp);
+    updateHumidityUI(state.humidity);
   }
 
   function updateIntensityHint(key) {
@@ -410,7 +463,10 @@
     if (isUltra && choPerHour > 0 && choPerHour < 30) choPerHour = 30;
     if (isLongUltra) choPerHour = Math.min(choPerHour, 70);
 
-    const schedule = generateSchedule(totalMin, km, choPerHour, state.temp, state.intensity, state.sport, state.warmup);
+    // 체감온도(Heat Index): 기온 + 습도 → 실질 생리 부하 기준
+    const effectiveTemp = calcHeatIndex(state.temp, state.humidity);
+
+    const schedule = generateSchedule(totalMin, km, choPerHour, effectiveTemp, state.intensity, state.sport, state.warmup);
 
     const raceGels  = schedule.filter(g => !g.isWarmup).length;
     const totalGels = schedule.length;
@@ -429,7 +485,7 @@
       avgInterval = raceOnly[0].t;
     }
 
-    const sweatRate     = calcSweatRate(state.temp, state.weight, state.gender, state.sport);
+    const sweatRate     = calcSweatRate(effectiveTemp, state.weight, state.gender, state.sport, state.humidity);
     const sweatNaConc   = calcSweatSodiumConc(sweatRate);
     const totalNaLoss   = Math.round(sweatRate * sweatNaConc * dh);
     const bmr           = calcBMR(state.weight, state.height, state.age, state.gender);
@@ -437,12 +493,17 @@
     const totalCalsBurned = Math.round(calFactor * state.weight * dh);
 
     const gelCoverageMin = choPerHour > 0 ? Math.round(30 / (choPerHour / 60)) : 0;
-    const needsSodiumWarning = (totalNaLoss - totalSodium > 800) && state.temp >= 23;
-    const tempIntervalNote = state.temp >= 35
-      ? `🌡 극한 고온 ${state.temp}°C — 섭취 간격 7분 단축 적용`
-      : state.temp >= 28
-      ? `🌡 고온 ${state.temp}°C — 섭취 간격 3분 단축 적용`
-      : null;
+    const needsSodiumWarning = (totalNaLoss - totalSodium > 800) && effectiveTemp >= 23;
+
+    // 체감온도 기준 인터벌 단축 안내 (기온과 다를 때 체감온도 함께 표시)
+    let tempIntervalNote = null;
+    if (effectiveTemp >= 35) {
+      const hiNote = effectiveTemp !== state.temp ? ` (체감 ${effectiveTemp}°C)` : '';
+      tempIntervalNote = `🌡 극한 고온 ${state.temp}°C${hiNote} — 섭취 간격 7분 단축 적용`;
+    } else if (effectiveTemp >= 28) {
+      const hiNote = effectiveTemp !== state.temp ? ` (체감 ${effectiveTemp}°C)` : '';
+      tempIntervalNote = `🌡 고온 ${state.temp}°C${hiNote} — 섭취 간격 3분 단축 적용`;
+    }
     const highWeightNote = null;
 
     saveState();
@@ -455,6 +516,7 @@
       sweatRate, sweatNaConc, totalNaLoss,
       bmr, totalCalsBurned,
       paceStr, gelCoverageMin, needsSodiumWarning, tempIntervalNote, highWeightNote,
+      temp: state.temp, humidity: state.humidity, effectiveTemp,
     });
   }
 
@@ -609,7 +671,7 @@
           <img class="report-header-watermark" src="assets/images/logo-symbol.png" alt="">
           <p class="report-header-eyebrow">⚡ FERN CarbFlow™ Fueling Plan</p>
           <h2 class="report-header-title">${r.ev.label} — ${iData.label}</h2>
-          <p class="report-header-meta">${r.dh.toFixed(1)}h · ${genderLabel} ${state.weight}kg · ${state.temp}°C · ${sportLabel}${r.paceStr ? ` · ${r.paceStr}` : ''}</p>
+          <p class="report-header-meta">${r.dh.toFixed(1)}h · ${genderLabel} ${state.weight}kg · ${r.temp}°C/${r.humidity}%${r.effectiveTemp !== r.temp ? ` (체감 ${r.effectiveTemp}°C)` : ''} · ${sportLabel}${r.paceStr ? ` · ${r.paceStr}` : ''}</p>
           ${state.gender === 'female' ? '<p style="margin:5px 0 0;font-size:10.5px;color:rgba(255,255,255,0.65);">여성은 지방 산화 비율이 높아 CHO 목표가 5% 낮게 적용됩니다</p>' : ''}
           ${state.gender === 'other' ? '<p style="margin:5px 0 0;font-size:10.5px;color:rgba(255,255,255,0.65);">성별 미설정: 남성 기준으로 계산됩니다</p>' : ''}
         </div>
@@ -847,6 +909,9 @@
 
     // Temperature
     dom.tempSlider.addEventListener('input', function () { updateTempUI(this.value); });
+
+    // Humidity
+    dom.humiditySlider.addEventListener('input', function () { updateHumidityUI(this.value); });
 
     // Calculate
     dom.btnCalc.addEventListener('click', handleCalculate);

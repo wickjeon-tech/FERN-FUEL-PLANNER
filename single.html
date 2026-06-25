@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FERN Fuel Planner</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue: #003EBF;
+  --blue-h: #002fa0;
+  --blue-bg: #eef2ff;
+  --blue-ring: #c7d7ff;
+  --bg: #ffffff;
+  --sf: #f7f8fa;
+  --bd: #e8e8e8;
+  --t1: #111111;
+  --t2: #555555;
+  --t3: #999999;
+  --r: 10px;
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--t1);
+  font-family: 'Pretendard', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px; -webkit-font-smoothing: antialiased;
+}
+
+/* HEADER */
+.hdr {
+  height: 58px; border-bottom: 1px solid var(--bd);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; position: sticky; top: 0; background: #fff; z-index: 100;
+}
+.logo { display: flex; align-items: center; gap: 9px; }
+.lm {
+  width: 30px; height: 30px; background: var(--blue);
+  border-radius: 7px; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 900; color: #fff;
+}
+.ln { font-size: 15px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+.hr { font-size: 11px; color: var(--t3); letter-spacing: .08em; text-transform: uppercase; }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 340px 1fr; height: calc(100vh - 58px); }
+
+/* SIDEBAR */
+.sb { border-right: 1px solid var(--bd); display: flex; flex-direction: column; overflow-y: auto; }
+.sb-body { padding: 10px 18px; flex: 1; }
+
+/* SECTION */
+.sec { margin-bottom: 9px; }
+.sl {
+  font-size: 10px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--t3); margin-bottom: 5px;
+}
+
+/* CHOICE */
+.cg { display: grid; gap: 6px; }
+.c2 { grid-template-columns: 1fr 1fr; }
+.c3 { grid-template-columns: 1fr 1fr 1fr; }
+.c4 { grid-template-columns: repeat(4,1fr); }
+.c3ev { grid-template-columns: repeat(3,1fr); }
+
+.cb {
+  border: 1.5px solid var(--bd); border-radius: var(--r);
+  background: var(--bg); padding: 8px 4px; text-align: center;
+  font-size: 12px; font-weight: 600; color: var(--t2);
+  cursor: pointer; transition: all .13s; line-height: 1.3;
+}
+.cb .ic { font-size: 16px; display: block; margin-bottom: 3px; }
+.cb:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
+.cb.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+/* INPUT */
+.iw { position: relative; }
+.iw input {
+  width: 100%; border: 1.5px solid var(--bd); border-radius: var(--r);
+  padding: 8px 36px 8px 11px; font-size: 14px; font-weight: 600;
+  color: var(--t1); background: var(--bg); outline: none; font-family: inherit;
+  transition: border-color .13s;
+}
+.iw input:focus { border-color: var(--blue); }
+.iw input::placeholder { color: var(--t3); font-weight: 400; }
+.iw .u { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--t3); pointer-events: none; }
+
+.dur-g { display: grid; grid-template-columns: 1fr 14px 1fr; gap: 6px; align-items: center; }
+.dur-s { text-align: center; font-size: 16px; font-weight: 700; color: var(--t3); }
+
+.body-g { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.bf-l { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--t3); margin-bottom: 4px; display: block; }
+
+/* CHO CARD */
+.cho-card {
+  border: 1.5px solid var(--bd); border-radius: var(--r);
+  overflow: hidden; margin-bottom: 8px;
+}
+.cho-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 13px 6px; border-bottom: 1px solid var(--bd);
+  background: var(--sf);
+}
+.cho-top-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--t3); }
+.cho-badge {
+  font-size: 9px; font-weight: 700; padding: 3px 9px;
+  border-radius: 20px; border: 1.5px solid var(--blue);
+  color: var(--blue); background: var(--blue-bg);
+  display: none;
+}
+.cho-badge.show { display: inline-block; }
+.cho-input-row {
+  display: flex; align-items: center; padding: 4px 13px;
+  border-bottom: 1px solid var(--bd); gap: 6px;
+}
+.cho-num {
+  flex: 1; border: none; outline: none;
+  font-size: 20px; font-weight: 800; color: var(--t1);
+  font-family: inherit; background: transparent; min-width: 0;
+}
+.cho-unit { font-size: 13px; color: var(--t3); white-space: nowrap; }
+.cho-presets { display: grid; grid-template-columns: repeat(4,1fr); gap: 0; }
+.cho-preset {
+  padding: 5px 4px; text-align: center; cursor: pointer;
+  border-right: 1px solid var(--bd); transition: all .13s;
+}
+.cho-preset:last-child { border-right: none; }
+.cho-preset:hover { background: var(--blue-bg); }
+.cho-preset.on { background: var(--blue-bg); }
+.cho-preset .pv { font-size: 14px; font-weight: 800; color: var(--t1); display: block; }
+.cho-preset.on .pv { color: var(--blue); }
+.cho-preset .pl { font-size: 9px; color: var(--t3); display: block; margin-top: 2px; }
+
+/* CHO HINT */
+.cho-hint {
+  background: var(--blue-bg); border: 1px solid var(--blue-ring);
+  border-radius: var(--r); padding: 5px 11px; font-size: 10px;
+  color: var(--t2); line-height: 1.4;
+}
+.cho-hint strong { color: var(--blue); font-weight: 700; }
+
+/* WARMUP TOGGLE */
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 13px; background: var(--sf);
+  border: 1.5px solid var(--bd); border-radius: var(--r);
+}
+.toggle-left {}
+.toggle-title { font-size: 12px; font-weight: 700; color: var(--t1); }
+.toggle-desc  { font-size: 10px; color: var(--t3); margin-top: 2px; }
+.toggle-sw {
+  width: 38px; height: 22px; border-radius: 11px;
+  background: var(--bd); cursor: pointer; position: relative;
+  transition: background .2s; flex-shrink: 0; border: none; outline: none;
+}
+.toggle-sw::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+.toggle-sw.on { background: var(--blue); }
+.toggle-sw.on::after { transform: translateX(16px); }
+
+/* TEMP */
+.temp-row { display: flex; align-items: center; gap: 10px; }
+.temp-val { font-size: 16px; font-weight: 800; min-width: 44px; text-align: right; }
+input[type=range] {
+  flex: 1; height: 3px; -webkit-appearance: none;
+  background: var(--bd); border-radius: 2px; outline: none; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 17px; height: 17px; border-radius: 50%;
+  background: var(--blue); box-shadow: 0 1px 4px rgba(0,62,191,.3); cursor: pointer;
+}
+
+/* FOOT */
+.sb-foot { padding: 10px 18px 14px; border-top: 1px solid var(--bd); }
+.calc-btn {
+  width: 100%; padding: 11px; background: var(--blue); border: none;
+  border-radius: var(--r); color: #fff; font-size: 13px; font-weight: 800;
+  letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
+  font-family: inherit; transition: background .13s;
+}
+.calc-btn:hover { background: var(--blue-h); }
+.calc-hint { font-size: 10px; color: var(--t3); text-align: center; margin-top: 6px; }
+
+/* MAIN */
+.main { overflow-y: auto; }
+
+/* EMPTY */
+.empty {
+  height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 40px; color: var(--t3);
+}
+.empty-ic {
+  width: 52px; height: 52px; border: 2px solid var(--bd); border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin-bottom: 16px;
+}
+.empty h3 { font-size: 15px; font-weight: 700; color: var(--t2); margin-bottom: 6px; }
+.empty p  { font-size: 12px; line-height: 1.6; max-width: 240px; }
+
+/* RESULTS */
+.results { display: none; }
+
+/* HERO */
+.rh { background: var(--blue); padding: 26px 32px; color: #fff; }
+.rh-tag   { font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.55); margin-bottom: 6px; }
+.rh-title { font-size: 22px; font-weight: 800; margin-bottom: 3px; }
+.rh-sub   { font-size: 12px; color: rgba(255,255,255,.6); }
+
+/* STATS */
+.stats { display: grid; grid-template-columns: repeat(5,1fr); border-bottom: 1px solid var(--bd); }
+.st { padding: 16px 14px; border-right: 1px solid var(--bd); }
+.st:last-child { border-right: none; }
+.st-l { font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--t3); margin-bottom: 4px; }
+.st-v { font-size: 20px; font-weight: 800; color: var(--blue); line-height: 1; }
+.st-u { font-size: 10px; color: var(--t3); margin-top: 2px; }
+
+/* COVERAGE BAR */
+.coverage-wrap { padding: 14px 32px; border-bottom: 1px solid var(--bd); display: flex; align-items: center; gap: 14px; }
+.cv-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--t3); white-space: nowrap; }
+.cv-bar-bg { flex: 1; height: 5px; background: var(--bd); border-radius: 3px; overflow: hidden; }
+.cv-bar-fill { height: 100%; border-radius: 3px; background: var(--blue); transition: width .4s; }
+.cv-pct { font-size: 12px; font-weight: 800; color: var(--blue); white-space: nowrap; }
+.cv-warn { font-size: 10px; color: #f59e0b; white-space: nowrap; display: none; }
+
+/* SECTION */
+.rsec { padding: 22px 32px; border-bottom: 1px solid var(--bd); }
+.rsec-hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; }
+.rsec-title { font-size: 15px; font-weight: 800; }
+.rsec-meta  { font-size: 12px; color: var(--t3); }
+
+/* TIMELINE */
+.tl { position: relative; padding-left: 26px; }
+.tl::before {
+  content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px;
+  width: 2px; background: var(--bd);
+}
+.tl-item { position: relative; margin-bottom: 26px; }
+.tl-item:last-child { margin-bottom: 0; }
+
+.tl-dot {
+  position: absolute; left: -26px; top: 5px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 3px #fff, 0 0 0 4px var(--blue-ring);
+  z-index: 1;
+}
+.tl-dot.warmup { background: #6b7280; box-shadow: 0 0 0 3px #fff, 0 0 0 4px #d1d5db; }
+
+.tl-top { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+.tl-badge {
+  font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  padding: 2px 9px; border-radius: 20px; background: var(--blue-bg); color: var(--blue);
+}
+.tl-badge.wu { background: #f3f4f6; color: #6b7280; }
+.tl-time { font-size: 19px; font-weight: 800; line-height: 1; }
+.tl-km   { font-size: 12px; color: var(--t3); margin-left: auto; }
+.tl-desc { font-size: 12px; color: var(--t2); line-height: 1.7; }
+
+/* NO GEL */
+.no-gel { text-align: center; padding: 28px 20px; border: 2px dashed var(--bd); border-radius: var(--r); color: var(--t3); font-size: 13px; }
+
+/* SODIUM NOTE */
+.na-note {
+  display: none; background: #fffbeb; border: 1.5px solid #fde68a;
+  border-radius: var(--r); padding: 13px 16px;
+  font-size: 12px; color: #92400e; line-height: 1.6; margin-top: 18px;
+}
+.na-note strong { font-weight: 700; }
+
+/* SCIENCE */
+.sci-g { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sci-c { background: var(--sf); border: 1px solid var(--bd); border-radius: var(--r); padding: 14px; }
+.sci-v { font-size: 18px; font-weight: 800; color: var(--blue); margin-bottom: 3px; }
+.sci-l { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
+.sci-d { font-size: 11px; color: var(--t2); line-height: 1.5; }
+
+/* CTA */
+.cta {
+  background: var(--blue); padding: 22px 32px;
+  display: flex; align-items: center; gap: 20px;
+}
+.cta-body { flex: 1; color: #fff; }
+.cta-l { font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.55); margin-bottom: 4px; }
+.cta-t { font-size: 17px; font-weight: 800; margin-bottom: 3px; }
+.cta-d { font-size: 11px; color: rgba(255,255,255,.6); }
+.cta-btn {
+  background: #fff; border: none; border-radius: var(--r);
+  padding: 12px 22px; font-size: 12px; font-weight: 800;
+  color: var(--blue); cursor: pointer; white-space: nowrap;
+  font-family: inherit; flex-shrink: 0;
+}
+
+/* INTENSITY HINT */
+.int-hint {
+  font-size: 10px; color: var(--t2); margin-top: 6px;
+  padding: 5px 10px; background: var(--sf); border: 1px solid var(--bd);
+  border-radius: 7px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.int-hint b { color: var(--blue); }
+
+/* ENERGY BREAKDOWN */
+.energy-bar {
+  padding: 12px 32px; border-bottom: 1px solid var(--bd);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.eb-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--t3); white-space: nowrap; }
+.eb-track { flex: 1; height: 7px; background: var(--bd); border-radius: 4px; overflow: hidden; min-width: 80px; }
+.eb-fill  { height: 100%; border-radius: 4px; background: linear-gradient(90deg,#003EBF,#2563eb); }
+.eb-pct   { font-size: 12px; font-weight: 800; color: var(--blue); white-space: nowrap; }
+.eb-kcal  { font-size: 11px; color: var(--t3); white-space: nowrap; }
+
+/* RESTART */
+.restart { text-align: center; padding: 14px; border-top: 1px solid var(--bd); }
+.restart-btn {
+  background: none; border: none; color: var(--t3); font-size: 12px;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+  font-family: inherit;
+}
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  .layout { grid-template-columns: 1fr; height: auto; }
+  .sb { border-right: none; border-bottom: 1px solid var(--bd); }
+  .main { height: auto; }
+  .stats { grid-template-columns: 1fr 1fr 1fr; }
+  .st:nth-child(3) { border-right: none; }
+  .sci-g { grid-template-columns: 1fr; }
+  .cta { flex-direction: column; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="logo">
+    <img src="Logo.png" alt="FERN" style="height:30px;width:auto;display:block;">
+  </div>
+  <div class="hr">Fuel Planner</div>
+</header>
+
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sb">
+    <div class="sb-body">
+
+      <!-- SPORT -->
+      <div class="sec">
+        <div class="sl">Sport</div>
+        <div class="cg c2">
+          <div class="cb on" id="sp-run" onclick="pickSport('run',this)">
+            <span class="ic">🏃</span>Running
+          </div>
+          <div class="cb" id="sp-bike" onclick="pickSport('bike',this)">
+            <span class="ic">🚴</span>Cycling
+          </div>
+        </div>
+      </div>
+
+      <!-- EVENT -->
+      <div class="sec">
+        <div class="sl">Event</div>
+        <div class="cg c3ev" id="ev-grid"></div>
+        <div id="custom-wrap" style="display:none;margin-top:6px;">
+          <div class="iw">
+            <input type="number" id="custom-km" placeholder="거리 입력" min="1" max="1000" step="0.1"
+              oninput="st.km=parseFloat(this.value)||0">
+            <span class="u">km</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DURATION -->
+      <div class="sec">
+        <div class="sl">Duration</div>
+        <div class="dur-g">
+          <div class="iw"><input type="number" id="dh" min="0" max="24" placeholder="0" oninput="autoCalc(true)"><span class="u">h</span></div>
+          <div class="dur-s">:</div>
+          <div class="iw"><input type="number" id="dm" min="0" max="59" placeholder="00" oninput="autoCalc(true)"><span class="u">m</span></div>
+        </div>
+      </div>
+
+      <!-- INTENSITY -->
+      <div class="sec">
+        <div class="sl">Intensity</div>
+        <div class="cg c4">
+          <div class="cb" onclick="pickIntensity('easy',this)">
+            <span style="font-size:9px;display:block;opacity:.6;margin-bottom:1px">Z2</span>Easy
+          </div>
+          <div class="cb on" id="int-moderate" onclick="pickIntensity('moderate',this)">
+            <span style="font-size:9px;display:block;opacity:.6;margin-bottom:1px">Z3</span>Moderate
+          </div>
+          <div class="cb" onclick="pickIntensity('hard',this)">
+            <span style="font-size:9px;display:block;opacity:.6;margin-bottom:1px">Z4</span>Hard
+          </div>
+          <div class="cb" onclick="pickIntensity('race',this)">
+            <span style="font-size:9px;display:block;opacity:.6;margin-bottom:1px">Z5</span>Race
+          </div>
+        </div>
+        <div class="int-hint" id="int-hint">
+          <b>Zone 3 — 유산소 파워 구간</b> · 탄수화물+지방 혼합 에너지. 권장 CHO <b>55g/hr</b>
+        </div>
+      </div>
+
+      <!-- CHO TARGET -->
+      <div class="sec">
+        <div class="sl">시간당 목표 탄수화물 <span style="font-weight:400;color:var(--t3)">(자동 계산 · 수동 조정 가능)</span></div>
+        <div class="cho-card">
+          <div class="cho-top">
+            <span class="cho-top-label">CHO Target</span>
+            <span class="cho-badge" id="cho-badge">직접 입력 중</span>
+          </div>
+          <div class="cho-input-row">
+            <input class="cho-num" type="number" id="cho-input" min="20" max="120" value="60"
+              oninput="onChoInput(this.value)">
+            <span class="cho-unit">g / hr</span>
+          </div>
+          <div class="cho-presets">
+            <div class="cho-preset" data-val="40" onclick="pickCho(40,this)">
+              <span class="pv">40g</span><span class="pl">일반</span>
+            </div>
+            <div class="cho-preset" data-val="60" onclick="pickCho(60,this)">
+              <span class="pv">60g</span><span class="pl">중급</span>
+            </div>
+            <div class="cho-preset" data-val="75" onclick="pickCho(75,this)">
+              <span class="pv">75g</span><span class="pl">고급</span>
+            </div>
+            <div class="cho-preset" data-val="90" onclick="pickCho(90,this)">
+              <span class="pv">90g</span><span class="pl">엘리트</span>
+            </div>
+          </div>
+        </div>
+        <div class="cho-hint" id="cho-hint">
+          <strong>중급:</strong> CarbFlow™ 이중 수송 경로 진입 구간. 하프~풀 마라톤 러너에게 권장합니다.<br>
+          <span style="color:var(--blue);">* 최적의 퍼포먼스를 위해 60g/h 이상 섭취를 추천합니다.</span>
+        </div>
+      </div>
+
+      <!-- WARMUP GEL -->
+      <div class="sec">
+        <div class="toggle-row">
+          <div class="toggle-left">
+            <div class="toggle-title">출발 전 Warmup 젤</div>
+            <div class="toggle-desc">출발 15분 전 섭취 · 초반 혈당 안정화</div>
+          </div>
+          <button class="toggle-sw" id="warmup-sw" onclick="toggleWarmup(this)"></button>
+        </div>
+      </div>
+
+      <!-- GENDER -->
+      <div class="sec">
+        <div class="sl">Gender</div>
+        <div class="cg c3">
+          <div class="cb" onclick="pickVal('gender','female',this)">Female</div>
+          <div class="cb on" onclick="pickVal('gender','male',this)">Male</div>
+          <div class="cb" onclick="pickVal('gender','other',this)">Other</div>
+        </div>
+      </div>
+
+      <!-- BODY -->
+      <div class="sec">
+        <div class="sl">Body <span style="font-weight:400;color:var(--t3)">(선택)</span></div>
+        <div class="body-g">
+          <div>
+            <span class="bf-l">Age</span>
+            <div class="iw"><input type="number" id="b-age" min="10" max="90" placeholder="—"><span class="u">yrs</span></div>
+          </div>
+          <div>
+            <span class="bf-l">Height</span>
+            <div class="iw"><input type="number" id="b-ht" min="140" max="220" placeholder="—"><span class="u">cm</span></div>
+          </div>
+          <div>
+            <span class="bf-l">Weight</span>
+            <div class="iw"><input type="number" id="b-wt" min="30" max="150" placeholder="—" oninput="autoCalc(true)"><span class="u">kg</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEMPERATURE -->
+      <div class="sec">
+        <div class="sl">Temperature</div>
+        <div class="temp-row">
+          <span style="font-size:13px;">🌡️</span>
+          <input type="range" id="temp-sl" min="-5" max="45" step="1" value="18"
+            oninput="st.temp=+this.value;document.getElementById('t-disp').textContent=this.value+'°C';autoCalc(true)">
+          <div class="temp-val" id="t-disp">18°C</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:var(--t3);">
+          <span>Cold</span><span>Cool</span><span>Warm</span><span>Hot</span>
+        </div>
+      </div>
+
+    </div><!-- /sb-body -->
+
+    <div class="sb-foot">
+      <button class="calc-btn" onclick="calculate()">Calculate →</button>
+      <div class="calc-hint">CarbFlow™ 1:0.8 이중 탄수화물 시스템 기반 개인화 플랜</div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main" id="main">
+
+    <div class="empty" id="empty">
+      <div class="empty-ic">⚡</div>
+      <h3>플랜을 계산해 보세요</h3>
+      <p>좌측에서 종목과 정보를 입력하고 Calculate를 누르면 개인 맞춤 퓨얼링 플랜이 나타납니다.</p>
+    </div>
+
+    <div class="results" id="results">
+
+      <div class="rh">
+        <div class="rh-tag">⚡ FERN CarbFlow™ Fueling Plan</div>
+        <div class="rh-title" id="r-title">—</div>
+        <div class="rh-sub"   id="r-sub">—</div>
+      </div>
+
+      <div class="stats">
+        <div class="st"><div class="st-l">Total Gels</div><div class="st-v" id="s-gels">—</div><div class="st-u">개</div></div>
+        <div class="st"><div class="st-l">Carbohydrate</div><div class="st-v" id="s-carbs">—</div><div class="st-u">g</div></div>
+        <div class="st"><div class="st-l">CHO / hr</div><div class="st-v" id="s-chohr">—</div><div class="st-u">g/hr</div></div>
+        <div class="st"><div class="st-l">Energy Use</div><div class="st-v" id="s-kcal">—</div><div class="st-u">kcal</div></div>
+        <div class="st"><div class="st-l">Avg Interval</div><div class="st-v" id="s-int">—</div><div class="st-u">min</div></div>
+      </div>
+
+      <div class="energy-bar">
+        <span class="eb-label">젤 에너지 기여율</span>
+        <div class="eb-track"><div class="eb-fill" id="eb-fill" style="width:0%"></div></div>
+        <span class="eb-pct" id="eb-pct">—</span>
+        <span class="eb-kcal" id="eb-kcal"></span>
+      </div>
+
+      <div class="coverage-wrap">
+        <span class="cv-label">CHO 커버리지</span>
+        <div class="cv-bar-bg"><div class="cv-bar-fill" id="cv-fill" style="width:0%"></div></div>
+        <span class="cv-pct" id="cv-pct">—</span>
+        <span class="cv-warn" id="cv-warn">⚠ 목표량 미달</span>
+      </div>
+
+      <div class="rsec">
+        <div class="rsec-hdr">
+          <div class="rsec-title">섭취 타임라인</div>
+          <div class="rsec-meta" id="tl-meta">—</div>
+        </div>
+        <div class="tl" id="tl-list"></div>
+        <!-- 울트라 배너 -->
+        <div id="ultra-banner" style="display:none;gap:14px;align-items:flex-start;padding:16px;margin-top:18px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:var(--r);font-size:12px;color:#78350f;line-height:1.7;"></div>
+
+        <div class="na-note" id="na-note">
+          🧂 <strong>고온 레이스 나트륨 주의 —</strong> 기온이 높을수록 땀 손실 나트륨이 급증합니다.
+          FERN CarbFlow™는 젤당 <strong>150mg 나트륨</strong>을 함유해 GU(60mg), Maurten(20~40mg) 대비
+          최고 수준. 반드시 물 150~200ml와 함께 섭취하세요.
+        </div>
+      </div>
+
+      <div class="rsec">
+        <div class="rsec-hdr"><div class="rsec-title">Why CarbFlow™?</div></div>
+        <div class="sci-g">
+          <div class="sci-c"><div class="sci-v">+17%</div><div class="sci-l">탄수화물 산화 효율</div><div class="sci-d">1:0.8 비율로 SGLT1·GLUT5 수송 경로를 동시에 활성화해 기존 2:1 대비 흡수 효율 향상.</div></div>
+          <div class="sci-c"><div class="sci-v">150mg</div><div class="sci-l">나트륨 / 1젤</div><div class="sci-d">GU 60mg, Maurten 20~40mg 대비 최고 수준. 한국 여름 레이스 고온 다습 환경에 최적화.</div></div>
+          <div class="sci-c"><div class="sci-v">28g</div><div class="sci-l">탄수화물 / 1젤</div><div class="sci-d">최대 흡수 가능 범위 내 설계. 위장 부담 없이 레이스 내내 꾸준히 복용 가능.</div></div>
+          <div class="sci-c"><div class="sci-v" id="sci-v">—</div><div class="sci-l">이론 필요량</div><div class="sci-d" id="sci-d">신체 데이터 입력 시 개인화됩니다.</div></div>
+        </div>
+      </div>
+
+      <div class="cta">
+        <div class="cta-body">
+          <div class="cta-l">FERN Energy Gel</div>
+          <div class="cta-t" id="cta-t">젤 구매하기</div>
+          <div class="cta-d">28g 탄수화물 · 150mg 나트륨 · 1:0.8 CarbFlow™</div>
+        </div>
+        <button class="cta-btn">구매하기 →</button>
+      </div>
+
+      <div class="restart">
+        <button class="restart-btn" onclick="resetCalc()">↺ 초기화</button>
+      </div>
+
+    </div><!-- /results -->
+  </main>
+</div>
+
+<script>
+// ── STATE ──
+const st = {
+  sport: 'run', event: null, km: 0,
+  intensity: 'moderate',
+  choHr: 55, choManual: false,
+  warmup: false, gender: 'male',
+  age: null, height: null, weight: null, temp: 18,
+};
+
+// ── INTENSITY DATA (2024 ACSM / Jeukendrup consensus) ──
+// MET values: running & cycling per intensity zone
+// choBase: recommended CHO g/hr at reference (70kg male, ≥2hr)
+// firstMin: first gel timing (minutes into race)
+// cutoffMin: minutes before end to stop scheduling gels
+// fatPct: approximate fat oxidation % at this intensity
+const INTENSITY = {
+  easy:     { label:'Z2 · Easy',     choBase:35, firstMin:40, cutoffMin:15, fatPct:55, met:{run:7,  bike:5.5}, hint:'Zone 2 — 저강도 유산소. 에너지의 55%를 지방에서 공급. 장시간 운동 기반 구간.', choRange:'20~45' },
+  moderate: { label:'Z3 · Moderate', choBase:55, firstMin:30, cutoffMin:20, fatPct:35, met:{run:9,  bike:7},   hint:'Zone 3 — 유산소 파워 구간. 탄수화물+지방 혼합. 하프~풀 마라톤 레이스 페이스.', choRange:'45~65' },
+  hard:     { label:'Z4 · Hard',     choBase:70, firstMin:25, cutoffMin:22, fatPct:20, met:{run:11, bike:9},   hint:'Zone 4 — 젖산 역치 구간. 탄수화물 의존도 급증. 외인성 탄수화물 보충이 핵심.', choRange:'60~80' },
+  race:     { label:'Z5 · Race',     choBase:90, firstMin:20, cutoffMin:25, fatPct:10, met:{run:14, bike:11},  hint:'Zone 5 — 최대 레이스 출력. 탄수화물 90%+ 연소. 이중 수송 경로 풀가동 필요.', choRange:'75~100' },
+};
+
+// ── EVENTS ──
+const EVENTS = {
+  run:  [
+    {l:'10 km',km:10},{l:'Half',km:21.0975},{l:'Marathon',km:42.195}
+  ],
+  bike: [
+    {l:'40 km',km:40},{l:'80 km',km:80},{l:'100 km',km:100},
+    {l:'160 km',km:160},{l:'200 km',km:200},{l:'250 km',km:250}
+  ],
+};
+
+// ── CHO 권장량 계산 (과학적 기반) ──
+// Jeukendrup 2014 + ACSM 2023 + Burke 2022
+function calcRecommendedCHO(intensity, totalMin, weight, gender) {
+  const base = INTENSITY[intensity]?.choBase || 55;
+
+  // 1. 운동 시간 보정 — 짧은 운동일수록 외인성 탄수화물 필요 감소
+  let durationMod;
+  if      (totalMin < 45)  durationMod = 0;     // 글리코겐 충분, 외부 보충 불필요
+  else if (totalMin < 75)  durationMod = 0.40;  // 소량 도움 (입 헹굼 효과 포함)
+  else if (totalMin < 90)  durationMod = 0.65;  // 단일 수송로(SGLT1) 활성화 구간
+  else                     durationMod = 1.0;   // 90분+ 글리코겐 한계 → 전체 권장량
+
+  let cho = Math.round(base * durationMod);
+
+  // 2. 체중 보정 — 동종이형 스케일링 (0.75 제곱, 70kg 기준)
+  const wt = weight || 70;
+  cho = Math.round(cho * Math.pow(wt / 70, 0.75));
+
+  // 3. 성별 보정 — 여성은 동일 상대 강도에서 지방 산화율 약 8% 높음 (Tarnopolsky 2000)
+  if (gender === 'female') cho = Math.round(cho * 0.92);
+
+  // 4. 최솟값/최댓값 클램프
+  return Math.min(Math.max(cho, 0), 120);
+}
+
+// ── CHO 힌트 업데이트 ──
+const CHO_INFO = {
+  40: { level:'일반',   desc:'단일 수송 경로(SGLT1)만 활성화되는 구간입니다. 1시간 이내 저강도 운동에 적합합니다.' },
+  60: { level:'중급',   desc:'이중 수송 경로(SGLT1+GLUT5) 진입 구간. 하프~풀 마라톤 러너에게 권장합니다.' },
+  75: { level:'고급',   desc:'두 수송 경로를 최대한 활용하는 구간. 훈련된 아마추어 고강도 레이스에 적합합니다.' },
+  90: { level:'엘리트', desc:'장 적응 훈련으로 최대 흡수 용량에 도달한 수준. 높은 수분 섭취와 병행 필수입니다.' },
+};
+
+function updateChoHint(val) {
+  const v = parseInt(val) || 0;
+  const hint = document.getElementById('cho-hint');
+  if (v === 0) { hint.innerHTML = '<strong>0g:</strong> 짧은 운동 시간으로 젤 섭취가 불필요한 구간입니다.'; return; }
+  const closest = [40,60,75,90].reduce((a,b) => Math.abs(b-v)<Math.abs(a-v)?b:a);
+  const info = CHO_INFO[closest];
+  const rec  = v < 60 ? '<br><span style="color:var(--blue);">* 최적 퍼포먼스를 위해 60g/h 이상 권장합니다.</span>' : '';
+  hint.innerHTML = `<strong>${info.level}:</strong> ${info.desc}${rec}`;
+}
+
+function pickCho(val, el) {
+  document.querySelectorAll('.cho-preset').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  st.choHr = val; st.choManual = true;
+  document.getElementById('cho-input').value = val;
+  document.getElementById('cho-badge').textContent = '수동 설정';
+  document.getElementById('cho-badge').classList.add('show');
+  updateChoHint(val);
+}
+
+function onChoInput(val) {
+  const v = parseInt(val) || 0;
+  st.choHr = v; st.choManual = true;
+  document.querySelectorAll('.cho-preset').forEach(b => b.classList.remove('on'));
+  const exact = document.querySelector(`.cho-preset[data-val="${v}"]`);
+  if (exact) exact.classList.add('on');
+  document.getElementById('cho-badge').textContent = '수동 설정';
+  document.getElementById('cho-badge').classList.toggle('show', !exact || true);
+  updateChoHint(v);
+}
+
+// ── AUTO CALC ──
+// 이벤트+시간이 입력된 경우 자동으로 젤 스케줄 재계산
+let _calcTimer = null;
+function autoCalc(debounce) {
+  if (!st.choManual) autoUpdateCHO();
+  const dh = parseInt(document.getElementById('dh').value) || 0;
+  const dm = parseInt(document.getElementById('dm').value) || 0;
+  if (st.km > 0 && (dh > 0 || dm > 0)) {
+    if (debounce) {
+      clearTimeout(_calcTimer);
+      _calcTimer = setTimeout(calculate, 350);
+    } else {
+      calculate();
+    }
+  }
+}
+
+// ── INTENSITY ──
+function pickIntensity(key, el) {
+  el.closest('.cg').querySelectorAll('.cb').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  st.intensity = key;
+  const d = INTENSITY[key];
+  document.getElementById('int-hint').innerHTML =
+    `<b>${d.label}</b> · ${d.hint} <span style="color:var(--blue)">권장 ${d.choRange}g/hr</span>`;
+  autoCalc();
+}
+
+function autoUpdateCHO() {
+  const h = parseInt(document.getElementById('dh').value) || 0;
+  const m = parseInt(document.getElementById('dm').value) || 0;
+  const totalMin = h * 60 + m;
+  const wt = parseInt(document.getElementById('b-wt').value) || 0;
+  const rec = calcRecommendedCHO(st.intensity, totalMin, wt, st.gender);
+  st.choHr = rec;
+  document.getElementById('cho-input').value = rec;
+  document.getElementById('cho-badge').classList.remove('show');
+  document.querySelectorAll('.cho-preset').forEach(b => b.classList.remove('on'));
+  const exact = document.querySelector(`.cho-preset[data-val="${rec}"]`);
+  if (exact) exact.classList.add('on');
+  updateChoHint(rec);
+}
+
+// ── SPORT ──
+function pickSport(sport, el) {
+  st.sport = sport;
+  document.querySelectorAll('[id^="sp-"]').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  renderEvents();
+}
+
+function pickVal(key, val, el) {
+  el.closest('.cg').querySelectorAll('.cb').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  st[key] = val;
+  autoCalc();
+}
+
+function renderEvents() {
+  const g = document.getElementById('ev-grid');
+  g.innerHTML = '';
+  st.event = null; st.km = 0;
+  document.getElementById('custom-wrap').style.display = 'none';
+  EVENTS[st.sport].forEach(ev => {
+    const b = document.createElement('div');
+    b.className = 'cb';
+    b.textContent = ev.l;
+    b.onclick = () => {
+      g.querySelectorAll('.cb').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      st.event = ev.l; st.km = ev.km;
+      document.getElementById('custom-wrap').style.display = ev.km ? 'none' : 'block';
+      autoCalc(); // 이벤트 선택 즉시 재계산
+    };
+    g.appendChild(b);
+  });
+}
+
+// ── WARMUP ──
+function toggleWarmup(el) {
+  st.warmup = !st.warmup;
+  el.classList.toggle('on', st.warmup);
+  autoCalc();
+}
+
+// ── GEL DESCRIPTIONS ──
+function gelDesc(n, total, pct, sport, intensity, isWarmup) {
+  if (isWarmup) return '출발 15분 전 섭취합니다. 혈당을 미리 올려두면 레이스 시작 직후 근육에 즉시 에너지가 공급됩니다. CarbFlow™ 이중 흡수 시스템을 미리 가동시키는 핵심 단계입니다.';
+  const zone = INTENSITY[intensity]?.label || 'Z3';
+  if (pct <= 0.15) return `${n}번째 젤 — 출발 후 초반 보충. ${zone} 운동으로 간 글리코겐 소모가 시작됩니다. CarbFlow™ 이중 수송 경로를 지금 가동해 초반 페이스를 안정시키세요.`;
+  if (pct < 0.35) return `${n}번째 젤 — 혈당이 서서히 낮아지는 구간. 1:0.8 듀얼 카브가 SGLT1·GLUT5 두 경로를 동시에 활성화해 에너지 공급을 이어줍니다.`;
+  if (Math.abs(pct - 0.5) < 0.12) return `${n}번째 젤 — 절반 통과! 지금 섭취한 에너지가 후반 ${sport==='run'?'15~20km':'40~50km'}의 연료가 됩니다. 흡수까지 약 15분, 지금이 딱 맞는 타이밍입니다.`;
+  if (pct < 0.65) return `${n}번째 젤 — 탄수화물을 가장 효율적으로 태우는 황금 구간. ${intensity==='race'||intensity==='hard'?'고강도 운동으로 근육 글리코겐 고갈이 임박합니다.':'지금 보충하지 않으면 후반 페이스 드랍이 옵니다.'}`;
+  if (pct < 0.82) return `${n}번째 젤 — 몸은 피로해도 뇌에 에너지가 있으면 페이스를 유지합니다. 후반부 핵심 보충 구간으로, 절대 건너뛰지 마세요.`;
+  return n === total
+    ? (sport === 'run'
+        ? `${n}번째 젤 — 피니시를 위한 마지막 연료. 15~20분 후 흡수된 탄수화물이 결승선에서 스퍼트 출력을 극대화합니다.`
+        : `${n}번째 젤 — 마지막 스프린트를 위한 최종 보충. 혈당을 최고 수준으로 유지해 파워 출력을 극대화합니다.`)
+    : `${n}번째 젤 — 라스트 ${sport==='run'?'킬로미터':'구간'}을 위한 에너지 비축. 지금 섭취한 탄수화물이 결승선까지 함께합니다.`;
+}
+
+// ── CALCULATE ──
+function calculate() {
+  const h = parseInt(document.getElementById('dh').value) || 0;
+  const m = parseInt(document.getElementById('dm').value) || 0;
+  const totalMin = h * 60 + m;
+  if (totalMin <= 0) return; // 시간 미입력 시 조용히 무시
+
+  const km    = st.km || parseFloat(document.getElementById('custom-km')?.value) || 0;
+  st.temp     = parseInt(document.getElementById('temp-sl').value);
+  st.weight   = parseInt(document.getElementById('b-wt').value) || null;
+  st.age      = parseInt(document.getElementById('b-age').value) || null;
+  st.height   = parseInt(document.getElementById('b-ht').value) || null;
+
+  const GC = 28, GN = 150;   // 젤당 탄수화물 28g, 나트륨 150mg
+  const iData = INTENSITY[st.intensity] || INTENSITY.moderate;
+
+  // ── 이벤트 분류 ──
+  const isUltra     = totalMin >= 360;  // 6시간+ (정확히 6시간도 울트라로 처리)
+  const isLongUltra = totalMin >= 720;  // 12시간+
+
+  // ── 에너지 소비량 계산 (MET 기반) ──
+  const wt   = st.weight || 70;
+  const met  = iData.met[st.sport] || iData.met.run;
+  const totalKcal = Math.round(met * wt * (totalMin / 60));
+
+  // ── 최종 CHO/hr 결정 ──
+  // calcRecommendedCHO는 durationMod를 120분 기준으로 적용했으나,
+  // 울트라 이벤트는 장 피로 등을 고려해 별도 처리
+  let carbHr = (st.choManual ? parseInt(document.getElementById('cho-input').value) || 0
+                              : calcRecommendedCHO(st.intensity, totalMin, wt, st.gender));
+
+  // 울트라 이벤트: 최소 30g/hr 보장 (장기 운동 중 저혈당 방지)
+  if (isUltra && carbHr > 0 && carbHr < 30) carbHr = 30;
+  // 롱울트라(12h+): 장 피로로 인한 흡수율 저하 반영 (최대 70g/hr)
+  if (isLongUltra && !st.choManual) carbHr = Math.min(carbHr, 70);
+
+  // ── 스케줄 타이밍 ──
+  let firstMin = iData.firstMin;
+  if (totalMin < 45)       firstMin = null;          // 45분 미만: 젤 불필요
+  else if (totalMin < 60)  firstMin = Math.min(firstMin, 15);
+  else if (totalMin < 90)  firstMin = Math.min(firstMin, 20);
+  // 울트라: 더 일찍 연료 공급 시작 (장기 운동일수록 초반 혈당 안정이 중요)
+  if (isUltra && firstMin !== null) firstMin = Math.min(firstMin, 25);
+
+  // ── 간격 계산 ──
+  // CHO 목표 ÷ 젤당 탄수화물 = 시간당 젤 수 → 분 간격
+  let intv = carbHr > 0 ? Math.round(60 / (carbHr / GC)) : 9999;
+
+  // 온도 보정: 고온에서 위장 부담 분산 (더 자주, 소량)
+  if (st.temp >= 28) intv = Math.max(intv - 3, 14);
+  if (st.temp >= 35) intv = Math.max(intv - 4, 12);
+
+  // 자전거: 위장 충격 적어 인터벌 여유
+  if (st.sport === 'bike') intv = Math.min(intv + 3, 45);
+
+  // ★ 울트라 이벤트 간격 상한 캡 (핵심 수정)
+  // 아무리 저강도/저체중이어도 울트라에서 60분 이상 공백은 위험
+  if (isLongUltra) intv = Math.min(intv, 50);   // 12h+: 최대 50분
+  else if (isUltra) intv = Math.min(intv, 55);  // 6~12h: 최대 55분
+
+  // ── 컷오프 (마지막 젤 시간) ──
+  // 레이스 길이에 따라 마지막 젤 타이밍 조정
+  let cutoffMin = iData.cutoffMin;
+  if (isUltra)             cutoffMin = Math.min(cutoffMin, 30); // 울트라: 30분 전까지
+  else if (totalMin < 90)  cutoffMin = Math.min(cutoffMin, 10); // 90분 미만: 10분 전
+  else if (totalMin < 150) cutoffMin = Math.min(cutoffMin, 15); // 2.5h 미만: 15분 전
+  // 자전거: 세로 충격 없어 흡수 빠름 → 마지막 젤 3분 여유 단축
+  if (st.sport === 'bike' && !isUltra && totalMin >= 120) {
+    cutoffMin = Math.max(cutoffMin - 3, 8);
+  }
+  const cutoff = totalMin - cutoffMin;
+
+  const sched = [];
+  if (firstMin !== null && carbHr > 0 && firstMin <= cutoff) {
+    let t = firstMin;
+    while (t <= cutoff) {
+      const pct = t / totalMin;
+      // 울트라 페이즈 라벨
+      let phase = null;
+      if (isUltra) {
+        if      (t < 180) phase = 1;  // 0~3h
+        else if (t < 360) phase = 2;  // 3~6h
+        else if (t < 720) phase = 3;  // 6~12h
+        else               phase = 4;  // 12h+
+      }
+      sched.push({ min: Math.round(t), pct, km: km ? Math.round(pct * km * 10) / 10 : null, isWarmup: false, phase });
+      t += intv;
+    }
+  }
+
+  // Warmup 젤 (앞에 삽입)
+  if (st.warmup && totalMin >= 25) {
+    sched.unshift({ min: -15, pct: -0.05, km: null, isWarmup: true });
+  }
+
+  const raceGels   = sched.filter(g => !g.isWarmup).length;
+  const totalGels  = sched.length;
+  const totalCarbs = totalGels * GC;
+  const totalNa    = totalGels * GN;
+  const raceSched  = sched.filter(g => !g.isWarmup);
+  const avgInt     = raceSched.length > 1
+    ? Math.round((raceSched[raceSched.length-1].min - raceSched[0].min) / (raceSched.length - 1))
+    : intv;
+
+  // ── 커버리지 & 에너지 기여율 ──
+  const theoreticalCHO = Math.round(carbHr * totalMin / 60);
+  const coverage       = theoreticalCHO > 0
+    ? Math.min(Math.round((totalCarbs / theoreticalCHO) * 100), 100) : 0;
+  const gelKcal  = totalCarbs * 4;  // 탄수화물 4kcal/g
+  const gelEnergyPct = totalKcal > 0 ? Math.min(Math.round(gelKcal / totalKcal * 100), 100) : 0;
+
+  // ── RENDER ──
+  const sportLabel = st.sport === 'run' ? 'Running' : 'Cycling';
+  const evLabel    = st.event || (km ? km + 'km' : '커스텀');
+  const intLabel   = iData.label;
+  document.getElementById('r-title').textContent = `${sportLabel} · ${evLabel} — ${intLabel}`;
+  document.getElementById('r-sub').textContent =
+    `${h}h ${m.toString().padStart(2,'0')}m · ${carbHr}g CHO/hr · ${st.temp}°C${wt !== 70 ? ' · ' + wt + 'kg' : ''}`;
+
+  document.getElementById('s-gels').textContent  = totalGels;
+  document.getElementById('s-carbs').textContent = totalCarbs;
+  document.getElementById('s-chohr').textContent = carbHr;
+  document.getElementById('s-kcal').textContent  = totalKcal.toLocaleString();
+  document.getElementById('s-int').textContent   = raceGels > 1 ? avgInt : '—';
+
+  // 에너지 기여율 바
+  document.getElementById('eb-fill').style.width = gelEnergyPct + '%';
+  document.getElementById('eb-pct').textContent  = gelEnergyPct + '%';
+  document.getElementById('eb-kcal').textContent = `젤 ${gelKcal}kcal / 총 ${totalKcal.toLocaleString()}kcal`;
+
+  // Coverage bar
+  const fillEl = document.getElementById('cv-fill');
+  fillEl.style.width = coverage + '%';
+  fillEl.style.background = coverage >= 90 ? 'var(--blue)' : coverage >= 75 ? '#f59e0b' : '#ef4444';
+  document.getElementById('cv-pct').textContent = coverage + '%';
+  document.getElementById('cv-pct').style.color = coverage >= 90 ? 'var(--blue)' : coverage >= 75 ? '#f59e0b' : '#ef4444';
+  document.getElementById('cv-warn').style.display = coverage < 85 ? 'inline' : 'none';
+
+  document.getElementById('tl-meta').textContent =
+    `${totalGels}개 · ${h > 0 ? h + 'h ' : ''}${m}m${st.warmup ? ' (워밍업 포함)' : ''}`;
+
+  // Timeline
+  const list = document.getElementById('tl-list');
+  list.innerHTML = '';
+
+  if (!totalGels) {
+    const noGelMsg = totalMin < 45
+      ? '45분 미만 운동 — 저장된 글리코겐만으로 충분합니다. 수분만 섭취하세요.'
+      : totalMin < 60
+      ? '단시간 고강도 운동 — 레이스 직전 웜업 젤 1개를 고려해 보세요.'
+      : '입력하신 조건으로는 젤 섭취 플랜이 생성되지 않습니다. CHO 목표를 높이거나 강도를 조정해 주세요.';
+    list.innerHTML = `<div class="no-gel">${noGelMsg}</div>`;
+  } else {
+    let raceIdx = 0;
+    let lastPhase = null;
+    const PHASE_LABELS = {
+      1: { icon:'🔵', title:'Phase 1 — 기어 진입 (0~3h)', desc:'초반 혈당 안정. 젤 중심 연료 공급.' },
+      2: { icon:'🟡', title:'Phase 2 — 순항 구간 (3~6h)', desc:'탄수화물 + 고형 식품 병행 시작 권장.' },
+      3: { icon:'🟠', title:'Phase 3 — 지구력 구간 (6~12h)', desc:'젤 + 고형 식품 교대. 카페인 젤 활용 고려.' },
+      4: { icon:'🔴', title:'Phase 4 — 후반 구간 (12h+)', desc:'위장 부담 최소화. 익숙한 음식 + 젤 유지.' },
+    };
+
+    sched.forEach((g, i) => {
+      const isWU = g.isWarmup;
+      if (!isWU) raceIdx++;
+
+      // 울트라 페이즈 헤더 삽입
+      if (!isWU && isUltra && g.phase !== lastPhase) {
+        lastPhase = g.phase;
+        const ph = PHASE_LABELS[g.phase];
+        if (ph) {
+          const header = document.createElement('div');
+          header.style.cssText = 'margin:18px 0 10px; padding:8px 12px; background:#f0f4ff; border-left:3px solid var(--blue); border-radius:0 7px 7px 0; font-size:11px;';
+          header.innerHTML = `<strong style="color:var(--blue)">${ph.icon} ${ph.title}</strong> <span style="color:var(--t3)">— ${ph.desc}</span>`;
+          list.appendChild(header);
+        }
+      }
+
+      const tLabel = isWU
+        ? '출발 15분 전'
+        : (() => { const hh = Math.floor(g.min/60), mm = (g.min%60).toString().padStart(2,'0'); return hh > 0 ? `${hh}h ${mm}m` : `${g.min}분`; })();
+      const kLabel = !isWU && g.km != null ? `${g.km} km` : '';
+
+      const el = document.createElement('div');
+      el.className = 'tl-item';
+      el.innerHTML = `
+        <div class="tl-dot${isWU ? ' warmup' : ''}"></div>
+        <div class="tl-top">
+          <span class="tl-badge${isWU ? ' wu' : ''}">${isWU ? 'WARMUP' : 'ENERGY'}</span>
+          <span class="tl-time">${tLabel}</span>
+          ${kLabel ? `<span class="tl-km">${kLabel}</span>` : ''}
+        </div>
+        <div class="tl-desc">${gelDesc(isWU ? -1 : raceIdx, raceGels, g.pct, st.sport, st.intensity, isWU)}</div>
+      `;
+      list.appendChild(el);
+    });
+  }
+
+  // ── 울트라 솔리드 푸드 배너 ──
+  const ultraBanner = document.getElementById('ultra-banner');
+  if (ultraBanner) {
+    if (isUltra) {
+      const solidNote = isLongUltra
+        ? `이 플랜은 FERN Energy Gel <strong>${totalGels}개 (${totalCarbs}g CHO)</strong>를 포함합니다. 12시간+ 울트라에서는 젤 외에 고형 식품(바나나, 떡, 감자, 에너지바)을 교대로 섭취해 위장을 보호하세요. 카페인 젤은 밤 구간 또는 페이스 드랍 시 전략적으로 사용하세요.`
+        : `이 플랜은 FERN Energy Gel <strong>${totalGels}개 (${totalCarbs}g CHO)</strong>를 포함합니다. 6시간+ 이벤트에서는 Phase 2부터 고형 식품(바나나, 에너지바 등)과 병행해 위장 피로를 예방하세요.`;
+      ultraBanner.innerHTML = `<span class="ultra-icon">🏔</span><div>${solidNote}</div>`;
+      ultraBanner.style.display = 'flex';
+    } else {
+      ultraBanner.style.display = 'none';
+    }
+  }
+
+  document.getElementById('na-note').style.display = st.temp >= 25 ? 'block' : 'none';
+
+  // Science personal
+  document.getElementById('sci-v').textContent = theoreticalCHO + 'g';
+  let sd = `총 ${totalMin}분 · ${carbHr}g/hr → ${theoreticalCHO}g 이론 필요량`;
+  if (st.weight) sd += ` (${wt}kg 체중 반영)`;
+  document.getElementById('sci-d').textContent = sd + '.';
+
+  document.getElementById('cta-t').textContent = `FERN Gel ${totalGels}개 필요`;
+
+  document.getElementById('empty').style.display   = 'none';
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── RESET ──
+function resetCalc() {
+  st.choManual = false;
+  document.getElementById('empty').style.display   = 'flex';
+  document.getElementById('results').style.display = 'none';
+}
+
+// ── INIT ──
+renderEvents();
+setTimeout(() => {
+  document.querySelector('#ev-grid .cb')?.click();
+  // 초기 intensity hint 세팅
+  const d = INTENSITY[st.intensity];
+  document.getElementById('int-hint').innerHTML =
+    `<b>${d.label}</b> · ${d.hint} <span style="color:var(--blue)">권장 ${d.choRange}g/hr</span>`;
+  // 초기 CHO 자동 설정
+  autoUpdateCHO();
+}, 0);
+</script>
+</body>
+</html>
